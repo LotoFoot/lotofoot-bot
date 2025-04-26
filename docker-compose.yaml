@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  lotofoot-bot:
+    build: .
+    environment:
+      - SPORTMONKS_API_TOKEN=${RctqRYlHUA7RncEHvgOQ9siUSWt7vQcX8RlAJ2QgEjY9jHGD0rfUI92vmJNS}
+      - TELEGRAM_BOT_TOKEN=${7634110829:AAHGThjyyp2EkH5fTT1TPt1cSFGeCY7-hlk}
+      - CHAT_ID=${7534364558}
+    restart: unless-stopped
