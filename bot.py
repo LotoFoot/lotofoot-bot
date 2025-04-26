@@ -59,6 +59,20 @@ def generate_pronostic(home_id, away_id):
         return "2"
     else:
         return "N"
+        
+        async def send_telegram_message(bot, text):
+    print("Début envoi message Telegram")
+    retry = True
+    while retry:
+        try:
+            await bot.send_message(chat_id=CHAT_ID, text=text)
+            print("Message Telegram envoyé avec succès")
+            retry = False
+        except RetryAfter as e:
+            print(f"Flood détecté, attente {e.retry_after} secondes")
+            await asyncio.sleep(e.retry_after)
+    print("Fin de la fonction d’envoi Telegram")
+
 
 async def send_telegram_message(bot, text):
     retry = True
@@ -69,6 +83,20 @@ async def send_telegram_message(bot, text):
         except RetryAfter as e:
             print(f"Flood détecté, attente de {e.retry_after} secondes")
             await asyncio.sleep(e.retry_after)
+            
+  async def send_telegram_message(bot, text):
+    print("Début envoi message Telegram")
+    retry = True
+    while retry:
+        try:
+            await bot.send_message(chat_id=CHAT_ID, text=text)
+            print("Message Telegram envoyé avec succès")
+            retry = False
+        except RetryAfter as e:
+            print(f"Flood détecté, attente {e.retry_after} secondes")
+            await asyncio.sleep(e.retry_after)
+    print("Fin de la fonction d’envoi Telegram")
+          
 
 async def main():
     league_ids = get_french_leagues()
