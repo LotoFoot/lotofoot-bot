@@ -14,13 +14,15 @@ def get_lotofoot_matches():
     url = "https://www.flashscore.fr/football/france/loto-foot/"
     headers = {'User-Agent': 'Mozilla/5.0'}
     response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.content, 'html.parser')
     
     matches = []
-    for match_div in soup.find_all("div", class_="event__match"):
-        home = match_div.find("div", class_="event__participant--home")
-        away = match_div.find("div", class_="event__participant--away")
-        time = match_div.find("div", class_="event__time")
+    # Trouve tous les matchs 
+    match_divs = soup.select('div.event__match')
+    for match_div in match_divs:
+        home = match_div.select_one('div.event__participant--home')
+        away = match_div.select_one('div.event__participant--away')
+        time = match_div.select_one('div.event__time')
         if home and away and time:
             matches.append({
                 "home": home.text.strip(),
@@ -32,6 +34,7 @@ def get_lotofoot_matches():
 def generate_simple_pronostics(matches):
     pronostics = []
     for m in matches:
+        # Pronostic basique : victoire domicile
         pronostics.append(f"{m['home']} vs {m['away']} à {m['time']} → Pronostic: 1")
     return pronostics
 
@@ -49,9 +52,9 @@ async def main():
     if not matches:
         print("Aucun match récupéré.")
         return
-
+    
     pronostics = generate_simple_pronostics(matches)
-    message_text = "📅 Pronostics Loto Foot :\n" + "\n".join(pronostics[:15])  # Limiter à 15 matchs
+    message_text = "📅 Pronostics Loto Foot :\n" + "\n".join(pronostics[:15])  # limite à 15
 
     print(message_text)
 
