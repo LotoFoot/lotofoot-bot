@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 nest_asyncio.apply()
 
-SPORTMONKS_API_TOKEN = "RctqRYlHUA7RncEHvgOQ9siUSWt7vQcX8RlAJ2QgEjY9jHGD0rfUI92vmJNS"
+SPORTMONKS_API_TOKEN = "juhvbus1A58J1qdImzNHOvPpV4FNd9FeotReBGHFtcVX3Glp69ndHjrKHmh9"
 TELEGRAM_BOT_TOKEN = "7634110829:AAHGThjyyp2EkH5fTT1TPt1cSFGeCY7-hlk"
 CHAT_ID = 7534364558
 
