@@ -12,16 +12,18 @@ async def send_telegram_message(bot, text):
     retry = True
     while retry:
         try:
+            print("Envoi du message Telegram...")
             await bot.send_message(chat_id=CHAT_ID, text=text)
             retry = False
+            print("Message envoyé.")
         except RetryAfter as e:
-            print(f"Flood détecté, attente de {e.retry_after} secondes")
+            print(f"Flood détecté, attente de {e.retry_after} secondes.")
             await asyncio.sleep(e.retry_after)
 
 async def main():
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
-    await send_telegram_message(bot, "Test d’envoi message Telegram réussi.")
-    print("Message de test envoyé sur Telegram.")
+    await send_telegram_message(bot, "Message test : le bot fonctionne et envoie bien.")
+    print("Fin du script.")
 
 if __name__ == "__main__":
     asyncio.run(main())
