@@ -17,7 +17,9 @@ def get_french_leagues():
     response = requests.get(url, params=params)
     if response.status_code == 200:
         leagues = response.json().get("data", [])
-        return [league['id'] for league in leagues if league.get('country', {}).get('name', '').lower() == 'france']
+        france_leagues = [league['id'] for league in leagues if league.get('country', {}).get('name', '').lower() == 'france']
+        print(f"Ligues françaises détectées : {france_leagues}")
+        return france_leagues
     else:
         print(f"Erreur API : {response.status_code}")
         return []
@@ -25,7 +27,7 @@ def get_french_leagues():
 def get_next_date():
     return (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
-def get_scheduled_matches(date, league_ids):
+def get_scheduled_matches(date, league_ids=None):
     url = f"https://api.sportmonks.com/v3/football/fixtures/date/{date}"
     params = {
         "include": "participants;league",
@@ -34,31 +36,16 @@ def get_scheduled_matches(date, league_ids):
     response = requests.get(url, params=params)
     if response.status_code == 200:
         all_matches = response.json().get("data", [])
-        return [m for m in all_matches if m.get('league') and m['league'].get('data') and m['league']['data']['id'] in league_ids]
+        if league_ids:
+            filtered = [m for m in all_matches if m.get('league') and m['league'].get('data') and m['league']['data']['id'] in league_ids]
+            print(f"Nombre de matchs filtrés par ligues : {len(filtered)}")
+            return filtered
+        else:
+            print(f"Nombre total de matchs trouvés : {len(all_matches)}")
+            return all_matches
     else:
         print(f"Erreur API : {response.status_code}")
         return []
-
-def get_team_form(team_id):
-    url = f"https://api.sportmonks.com/v3/football/teams/{team_id}/form"
-    params = {"api_token": SPORTMONKS_API_TOKEN}
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        data = response.json().get("data", [])
-        wins = sum(1 for m in data if m.get('score', {}).get('winner_team_id') == team_id)
-        total = len(data)
-        return wins / total if total > 0 else 0
-    return 0
-
-def generate_pronostic(home_id, away_id):
-    home_form = get_team_form(home_id)
-    away_form = get_team_form(away_id)
-    if home_form > away_form + 0.2:
-        return "1"
-    elif away_form > home_form + 0.2:
-        return "2"
-    else:
-        return "N"
 
 async def send_telegram_message(bot, text):
     retry = True
@@ -67,7 +54,6 @@ async def send_telegram_message(bot, text):
             await bot.send_message(chat_id=CHAT_ID, text=text)
             retry = False
         except RetryAfter as e:
-            print(f"Flood détecté, attente de {e.retry_after} secondes")
             await asyncio.sleep(e.retry_after)
 
 async def main():
@@ -75,7 +61,9 @@ async def main():
     date = get_next_date()
     print(f"Pronostics Loto Foot pour le {date}")
 
-    matches = get_scheduled_matches(date, league_ids)
+    # Récupérer sans filtrer pour tester
+    matches = get_scheduled_matches(date)  # Pas de filtre ligue
+
     if not matches:
         print("Aucun match trouvé pour la date.")
         return
@@ -83,21 +71,19 @@ async def main():
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     messages = []
 
-    for match in matches:
+    for match in matches[:15]:  # prendre 15 premiers matchs
         home = match['participants'][0]['name']
         away = match['participants'][1]['name']
-        home_id = match['participants'][0]['id']
-        away_id = match['participants'][1]['id']
-        league = match['league']['data']['name']
-        pronostic = generate_pronostic(home_id, away_id)
-        messages.append(f"{home} vs {away} | Ligue: {league} | Pronostic: {pronostic}")
+        league = match['league']['data']['name'] if match.get('league') and match['league'].get('data') else "Inconnu"
+        messages.append(f"{home} vs {away} | Ligue: {league}")
 
-    message_text = "\n".join(messages)
+    message_text = f"📅 Matchs détectés pour le {date}:\n" + "\n".join(messages)
+    print(message_text)
     await send_telegram_message(bot, message_text)
-    print("Pronostics envoyés.")
 
 if __name__ == "__main__":
     nest_asyncio.apply()
     asyncio.run(main())
+
 
 
