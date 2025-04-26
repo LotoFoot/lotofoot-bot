@@ -27,7 +27,7 @@ def get_french_leagues():
 def get_next_date():
     return (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
-def get_scheduled_matches(date, league_ids=None):
+def get_scheduled_matches(date, league_ids):
     url = f"https://api.sportmonks.com/v3/football/fixtures/date/{date}"
     params = {
         "include": "participants;league",
@@ -36,13 +36,9 @@ def get_scheduled_matches(date, league_ids=None):
     response = requests.get(url, params=params)
     if response.status_code == 200:
         all_matches = response.json().get("data", [])
-        if league_ids:
-            filtered = [m for m in all_matches if m.get('league') and m['league'].get('data') and m['league']['data']['id'] in league_ids]
-            print(f"Nombre de matchs filtrés par ligues : {len(filtered)}")
-            return filtered
-        else:
-            print(f"Nombre total de matchs trouvés : {len(all_matches)}")
-            return all_matches
+        filtered = [m for m in all_matches if m.get('league') and m['league'].get('data') and m['league']['data']['id'] in league_ids]
+        print(f"Nombre de matchs français pour la date {date}: {len(filtered)}")
+        return filtered
     else:
         print(f"Erreur API : {response.status_code}")
         return []
@@ -61,9 +57,7 @@ async def main():
     date = get_next_date()
     print(f"Pronostics Loto Foot pour le {date}")
 
-    # Récupérer sans filtrer pour tester
-    matches = get_scheduled_matches(date)  # Pas de filtre ligue
-
+    matches = get_scheduled_matches(date, league_ids)
     if not matches:
         print("Aucun match trouvé pour la date.")
         return
@@ -71,19 +65,20 @@ async def main():
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     messages = []
 
-    for match in matches[:15]:  # prendre 15 premiers matchs
+    for match in matches:
         home = match['participants'][0]['name']
         away = match['participants'][1]['name']
         league = match['league']['data']['name'] if match.get('league') and match['league'].get('data') else "Inconnu"
         messages.append(f"{home} vs {away} | Ligue: {league}")
 
-    message_text = f"📅 Matchs détectés pour le {date}:\n" + "\n".join(messages)
+    message_text = f"📅 Matchs français pour le {date}:\n" + "\n".join(messages)
     print(message_text)
     await send_telegram_message(bot, message_text)
 
 if __name__ == "__main__":
     nest_asyncio.apply()
     asyncio.run(main())
+
 
 
 
